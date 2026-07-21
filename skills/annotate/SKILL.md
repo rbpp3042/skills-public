@@ -62,5 +62,6 @@ If the page is open and browser state is readable:
 
 - HTML only (not Markdown)
 - Expects a self-contained, single-file HTML document with an inline `<style>` and a `<body>`. External stylesheets are not inlined and their styling will be lost. If there's no `<body>`, the script exits with a clear error.
-- The shell is themed via CSS custom properties (`--ink`, `--surface`, `--rule`, `--accent`, …). It ships light and dark defaults, and a source document that defines its own values overrides them.
-- CSS class collisions are unlikely but possible — the shell uses names like `.toolbar`, `.sidebar`, `.popup`, `.comment-card`. Check the source if the layout looks off.
+- CSS class collisions are unlikely but possible — the shell uses `.toolbar`, `.sidebar`, `.popup`, `.comment-card`, `#doc`. Check the source if the layout looks off.
+
+See [README.md](README.md) for the full feature list, theming variables, and standalone usage.

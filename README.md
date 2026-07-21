@@ -13,7 +13,7 @@ A small collection of [Claude Code](https://claude.com/claude-code) skills I use
 **Copy into a project:**
 
 ```bash
-git clone https://github.com/<user>/skills-public.git
+git clone https://github.com/rbpp3042/skills-public.git
 cp -r skills-public/skills/annotate <your-project>/.claude/skills/
 ```
 

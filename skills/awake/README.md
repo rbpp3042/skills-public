@@ -85,7 +85,7 @@ The point of the skill. Add to `~/.claude/settings.json`, replacing `<skill-dir>
 
 The hook reads `session_id` from the JSON on stdin and uses it as the holder id. It always exits `0` and prints nothing, so it cannot block a turn or inject text into the context.
 
-Restart Claude Code after editing `settings.json`.
+Claude Code picks the hooks up without a restart — it re-reads `settings.json` while running. If a session does not seem to react, restart just that one.
 
 **Side effect worth knowing:** the Mac now also stays awake during ordinary short exchanges — for the seconds until the answer lands. If that bothers you, move `acquire` from `UserPromptSubmit` to `PreToolUse`, so it only kicks in once the agent actually starts using tools.
 

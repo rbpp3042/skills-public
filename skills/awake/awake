@@ -12,7 +12,18 @@ mkdir -p "$STATE"
 
 amph() { osascript -e "tell application \"Amphetamine\" to $1" 2>/dev/null; }
 active() { [[ $(amph "session is active") == true ]] }
-prune() { find "$STATE" -type f -mmin +720 -delete 2>/dev/null }
+# Убрать холдеров, чей процесс-владелец мёртв. Файл холдера содержит pid
+# (или пуст — тогда работает только страховка по возрасту, 12 часов).
+prune() {
+  local f pid
+  for f in "$STATE"/*(N); do
+    pid=$(head -1 "$f" 2>/dev/null)
+    if [[ -n "$pid" && "$pid" == <-> ]]; then
+      kill -0 "$pid" 2>/dev/null || rm -f "$f"
+    fi
+  done
+  find "$STATE" -type f -mmin +720 -delete 2>/dev/null
+}
 holders() { ls -1 "$STATE" 2>/dev/null }
 
 start() {
@@ -32,7 +43,7 @@ case "$1" in
   acquire)
     prune
     [[ -n "$2" ]] || exit 0
-    touch "$STATE/$2"
+    print -r -- "${AWAKE_OWNER:-}" > "$STATE/$2"
     active || start 12
     exit 0 ;;
   release)
@@ -49,7 +60,7 @@ case "$1" in
       echo "awake: off"
     fi ;;
   --)
-    shift; touch "$STATE/proc.$$"; start 12
+    shift; print -r -- $$ > "$STATE/proc.$$"; start 12
     trap "rm -f '$STATE/proc.$$'; [[ -z \$(ls -1 '$STATE' 2>/dev/null) ]] && osascript -e 'tell application \"Amphetamine\" to end session' >/dev/null 2>&1" EXIT INT TERM
     "$@" ;;
   ""|status_default) exec "$0" status ;;

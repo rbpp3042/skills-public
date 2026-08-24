@@ -35,7 +35,9 @@ awake -- <cmd>     # hold while <cmd> runs, release when it exits
 
 Every holder is a file under `$XDG_STATE_HOME/awake/holders` (default `~/.local/state/awake/holders`). `acquire <id>` adds one, `release <id>` removes one, and the Amphetamine session ends only when the last holder is gone. Two parallel Claude Code sessions therefore do not switch each other off.
 
-Two safety nets against a stuck holder: the Amphetamine session is started with a 12-hour duration and expires by itself, and holder files older than 12 hours are pruned on every `acquire`.
+**Dead holders are garbage-collected.** Each holder file records the pid of the process that took it — for the Claude Code hook that is the `claude` process itself (`$PPID`). On every `acquire`, holders whose owner process is gone are removed. So a session that dies without releasing — a crash, a `kill -9`, a hook that never fired — does not hold the Mac awake.
+
+Two further safety nets: the Amphetamine session is started with a 12-hour duration and expires by itself, and holder files older than 12 hours are pruned regardless of pid. The age rule is what covers holders with no recorded owner, such as the `manual` one.
 
 A manual `awake on` registers its own `manual` holder, which only `awake off` clears — so hooks cannot switch off something you turned on by hand.
 

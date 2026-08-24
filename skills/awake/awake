@@ -1,0 +1,57 @@
+#!/bin/zsh
+# awake — не давать маку уснуть с закрытой крышкой (обёртка над Amphetamine)
+# awake on [часы]     включить вручную (по умолчанию 3ч)
+# awake off           выключить и сбросить всех держателей
+# awake status        состояние, остаток времени, кто держит
+# awake acquire <id>  взять держатель (для хуков)
+# awake release <id>  отпустить держатель; при последнем — выключить
+# awake -- cmd...     держать, пока идёт команда, потом выключить
+
+STATE=${XDG_STATE_HOME:-$HOME/.local/state}/awake/holders
+mkdir -p "$STATE"
+
+amph() { osascript -e "tell application \"Amphetamine\" to $1" 2>/dev/null; }
+active() { [[ $(amph "session is active") == true ]] }
+prune() { find "$STATE" -type f -mmin +720 -delete 2>/dev/null }
+holders() { ls -1 "$STATE" 2>/dev/null }
+
+start() {
+  local h=${1:-12}
+  amph "start new session with options {duration:$h, interval:hours, displaySleepAllowed:false}" >/dev/null
+  amph "enable closed display mode" >/dev/null
+  amph "prevent display sleep" >/dev/null
+}
+stop() { amph "end session" >/dev/null }
+
+case "$1" in
+  on)
+    touch "$STATE/manual"; start "${2:-3}"
+    echo "awake: on, ${2:-3}h, крышку можно закрывать" ;;
+  off)
+    rm -f "$STATE"/*(N); stop; echo "awake: off" ;;
+  acquire)
+    prune
+    [[ -n "$2" ]] || exit 0
+    touch "$STATE/$2"
+    active || start 12
+    exit 0 ;;
+  release)
+    [[ -n "$2" ]] && rm -f "$STATE/$2"
+    prune
+    [[ -z "$(holders)" ]] && stop
+    exit 0 ;;
+  status)
+    if active; then
+      local s=$(amph "session time remaining")
+      local who=$(holders | tr '\n' ' ')
+      echo "awake: on | осталось ${s}s | closed-display: $(amph 'closed display mode enabled') | держат: ${who:-—}"
+    else
+      echo "awake: off"
+    fi ;;
+  --)
+    shift; touch "$STATE/proc.$$"; start 12
+    trap "rm -f '$STATE/proc.$$'; [[ -z \$(ls -1 '$STATE' 2>/dev/null) ]] && osascript -e 'tell application \"Amphetamine\" to end session' >/dev/null 2>&1" EXIT INT TERM
+    "$@" ;;
+  ""|status_default) exec "$0" status ;;
+  *) sed -n '2,8p' "$0" | sed 's/^# \?//' ;;
+esac

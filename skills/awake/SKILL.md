@@ -1,0 +1,37 @@
+---
+name: awake
+description: Keep the Mac awake with the lid closed while an agent is working — a scriptable wrapper around Amphetamine. Use when the user asks to stop the machine sleeping, wants to close the laptop while a task runs, or invokes /awake.
+---
+
+# awake
+
+Keeps a Mac from sleeping — **including with the lid closed** — for as long as an agent is actually working.
+
+## When to use
+
+- The user is about to close the laptop while a long task runs
+- The user asks to stop the Mac sleeping / "не давать ноуту уснуть"
+- The user invokes `/awake`
+
+## Why not `caffeinate`
+
+`caffeinate` sets power assertions (idle, display, disk, system). Lid-close sleep is handled separately and is **not** covered by those assertions — a Mac on battery with no external display sleeps anyway. The only built-in alternative is `sudo pmset -b disablesleep 1`, which is a global flag requiring sudo with no automatic expiry.
+
+This skill drives [Amphetamine](https://apps.apple.com/app/amphetamine/id937984704) through its AppleScript API instead — closed-display mode, no sudo, and sessions that expire on their own.
+
+## Commands
+
+Run the script next to this file:
+
+```bash
+<skill-dir>/awake on [hours]   # on, default 3h, self-expires
+<skill-dir>/awake off          # off, clears all holders
+<skill-dir>/awake status       # state, time remaining, who is holding it
+<skill-dir>/awake -- <cmd>     # hold for the duration of <cmd>, release on exit
+```
+
+Report a single line of the script's output to the user. Do not add explanation or next steps.
+
+## Requirements
+
+macOS with Amphetamine installed. First run needs Automation permission for the calling terminal to control Amphetamine.

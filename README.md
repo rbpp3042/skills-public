@@ -9,6 +9,7 @@ Each skill is a self-contained folder under `skills/` — a `SKILL.md` telling t
 | Skill | What it does |
 | --- | --- |
 | [`annotate`](skills/annotate) | Turns a self-contained HTML report into an annotatable version — select any text, leave a comment, export the notes |
+| [`awake`](skills/awake) | Keeps a Mac awake with the lid closed for exactly as long as an agent is working — Amphetamine driven by Claude Code hooks |
 
 ## Install
 

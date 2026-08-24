@@ -9,9 +9,9 @@ Keeps a Mac from sleeping — **including with the lid closed** — for as long 
 
 ## When to use
 
-- The user is about to close the laptop while a long task runs
-- The user asks to stop the Mac sleeping / "не давать ноуту уснуть"
-- The user invokes `/awake`
+- The user asks whether the Mac is being kept awake, or invokes `/awake`
+- The user says the lock is stuck and wants it cleared
+- A long-running shell command needs to survive a closed lid (`awake -- <cmd>`)
 
 ## Why not `caffeinate`
 
@@ -24,11 +24,12 @@ This skill drives [Amphetamine](https://apps.apple.com/app/amphetamine/id9379847
 Run the script next to this file:
 
 ```bash
-<skill-dir>/awake on [hours]   # on, default 3h, self-expires
-<skill-dir>/awake off          # off, clears all holders
 <skill-dir>/awake status       # state, time remaining, who is holding it
+<skill-dir>/awake off          # emergency reset: drop every holder, switch off
 <skill-dir>/awake -- <cmd>     # hold for the duration of <cmd>, release on exit
 ```
+
+There is no manual on/off toggle: the lock is taken and released by the hooks (see the README), so the only thing to report on demand is `status`. Reach for `off` only when the user says it is stuck.
 
 Report a single line of the script's output to the user. Do not add explanation or next steps.
 

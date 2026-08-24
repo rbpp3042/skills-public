@@ -1,7 +1,6 @@
 #!/bin/zsh
 # awake — не давать маку уснуть с закрытой крышкой (обёртка над Amphetamine)
-# awake on [часы]     включить вручную (по умолчанию 3ч)
-# awake off           выключить и сбросить всех держателей
+# awake off           аварийный сброс: снять всех держателей и выключить
 # awake status        состояние, остаток времени, кто держит
 # awake acquire <id>  взять держатель (для хуков)
 # awake release <id>  отпустить держатель; при последнем — выключить
@@ -12,8 +11,8 @@ mkdir -p "$STATE"
 
 amph() { osascript -e "tell application \"Amphetamine\" to $1" 2>/dev/null; }
 active() { [[ $(amph "session is active") == true ]] }
-# Убрать холдеров, чей процесс-владелец мёртв. Файл холдера содержит pid
-# (или пуст — тогда работает только страховка по возрасту, 12 часов).
+# Убрать холдеров, чей процесс-владелец мёртв. Файл холдера содержит pid;
+# страховка по возрасту (12ч) добивает всё, что почему-то осталось без него.
 prune() {
   local f pid
   for f in "$STATE"/*(N); do
@@ -35,9 +34,6 @@ start() {
 stop() { amph "end session" >/dev/null }
 
 case "$1" in
-  on)
-    touch "$STATE/manual"; start "${2:-3}"
-    echo "awake: on, ${2:-3}h, крышку можно закрывать" ;;
   off)
     rm -f "$STATE"/*(N); stop; echo "awake: off" ;;
   acquire)
@@ -64,5 +60,5 @@ case "$1" in
     trap "rm -f '$STATE/proc.$$'; [[ -z \$(ls -1 '$STATE' 2>/dev/null) ]] && osascript -e 'tell application \"Amphetamine\" to end session' >/dev/null 2>&1" EXIT INT TERM
     "$@" ;;
   ""|status_default) exec "$0" status ;;
-  *) sed -n '2,8p' "$0" | sed 's/^# \?//' ;;
+  *) sed -n '2,7p' "$0" | sed 's/^# \?//' ;;
 esac

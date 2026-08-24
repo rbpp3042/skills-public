@@ -23,11 +23,14 @@ So this wraps [Amphetamine](https://apps.apple.com/app/amphetamine/id937984704) 
 ## What it does
 
 ```bash
-awake on [hours]   # on, default 3h — the lid can be closed
-awake off          # off
 awake status       # state, time remaining, who is holding it
+awake off          # emergency reset: drop every holder, switch off
 awake -- <cmd>     # hold while <cmd> runs, release when it exits
+awake acquire <id> # take a holder   (this is what the hook calls)
+awake release <id> # drop a holder   (this is what the hook calls)
 ```
+
+**There is no manual on/off switch, by design.** A wake-lock nobody owns is a wake-lock somebody forgets — that is the whole problem with `sudo pmset disablesleep`. Every hold here belongs to a process: a Claude Code session via the hooks, or a command via `awake -- <cmd>`. When the owner goes, the hold goes. `off` exists only as an emergency reset.
 
 `awake -- <cmd>` is the standalone form: `awake -- claude` keeps the Mac up for that session and releases on exit, including on Ctrl-C.
 
@@ -37,9 +40,7 @@ Every holder is a file under `$XDG_STATE_HOME/awake/holders` (default `~/.local/
 
 **Dead holders are garbage-collected.** Each holder file records the pid of the process that took it — for the Claude Code hook that is the `claude` process itself (`$PPID`). On every `acquire`, holders whose owner process is gone are removed. So a session that dies without releasing — a crash, a `kill -9`, a hook that never fired — does not hold the Mac awake.
 
-Two further safety nets: the Amphetamine session is started with a 12-hour duration and expires by itself, and holder files older than 12 hours are pruned regardless of pid. The age rule is what covers holders with no recorded owner, such as the `manual` one.
-
-A manual `awake on` registers its own `manual` holder, which only `awake off` clears — so hooks cannot switch off something you turned on by hand.
+Two further safety nets: the Amphetamine session is started with a 12-hour duration and expires by itself, and holder files older than 12 hours are pruned regardless of pid — covering anything that somehow ended up without a recorded owner.
 
 ## Install
 
@@ -99,8 +100,12 @@ Closed-display mode also needs to be allowed once in Amphetamine → Preferences
 ## Verifying
 
 ```bash
-awake status                 # awake: off
-awake acquire a && awake acquire b
-awake release a && awake status   # still on, held by b
-awake release b && awake status   # awake: off
+sleep 300 & OWNER=$!
+awake status                                    # awake: off
+AWAKE_OWNER=$OWNER awake acquire a
+AWAKE_OWNER=$OWNER awake acquire b
+awake release a && awake status                 # still on, held by b
+awake release b && awake status                 # awake: off
 ```
+
+To check the garbage collector, take a holder owned by a process, kill it, and run any `acquire` — the dead holder is gone.
